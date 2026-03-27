@@ -14,9 +14,52 @@ jobs:
     name: Build and Push to ECR
     runs-on: ubuntu-latest
     steps:
-      # Checkout repo
-      - name: Checkout
+      # 1. Checkout full code (important for Sonar)
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 2. Set up Java
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      # 3. Cache Sonar dependencies
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      # 4. Cache Maven dependencies
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      # 5. Build + Test + Sonar Scan
+      - name: Build and Analyze
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          mvn -B clean verify \
+          org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+          -Dsonar.host.url=https://sonarcloud.io \
+          -Dsonar.projectKey=priym14_ecom-springboot \
+          -Dsonar.organization=priym14
+
+      # 6. Quality Gate (FAIL pipeline if bad code)
+      - name: SonarCloud Quality Gate
+        uses: sonarsource/sonarqube-quality-gate-action@v1
+        timeout-minutes: 5
+        with:
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
 
       #  Configure AWS credentials (OIDC)
       - name: Configure AWS credentials
