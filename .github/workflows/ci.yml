@@ -45,6 +45,7 @@ jobs:
 
       # 5. Build + Test + Sonar Scan
       - name: Build and Analyze
+        working-directory: ./JtProject
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
