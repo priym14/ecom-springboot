@@ -45,11 +45,10 @@ jobs:
 
       # 5. Build + Test + Sonar Scan
       - name: Build and Analyze
-        working-directory: ./JtProject
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          mvn -B clean verify \
+          mvn -f JtProject/pom.xml -B clean verify \
           org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
           -Dsonar.host.url=https://sonarcloud.io \
           -Dsonar.projectKey=priym14_ecom-springboot \
